@@ -151,9 +151,9 @@ void fuzz( char dest[] ) {
 
     while(1) {
 
-        printf("[i] Trying to send data to \"%s\"", dest);
-        write(s, "a", 6);
-        
+        printf("[i] Trying to send data to \"%s\"...\n", dest);
+        write(s, "a", 2);
+
     }
 
 
