@@ -134,11 +134,13 @@ struct bt_device *get_bt_device_list() {
 void fuzz( char dest[] ) {
 
     struct sockaddr_rc address = { 0 };
-    int dev_id, sock, s;
+    int dev_id, sock, s, status;
     int i = 0;
     char addr[19] = { 0 };
 
     s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+    address.rc_family = AF_BLUETOOTH;
+    address.rc_channel = (uint8_t) 1;
     str2ba( dest, &address.rc_bdaddr );
 
     // Choosing Bluetooth Adapter to use (first available adapter) and opening socket
@@ -149,10 +151,14 @@ void fuzz( char dest[] ) {
         exit(1);
     }
 
+    status = connect(s, (struct sockaddr *)&address, sizeof(address));
+    printf("[i] connection status: %d\n\n",status);
+
     while(1) {
 
         printf("[i] Trying to send data to \"%s\"...\n", dest);
         write(s, "a", 2);
+        sleep(1);
 
     }
 
