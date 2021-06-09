@@ -16,6 +16,10 @@ ____ _______ ______ _    _ __________________ _____
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
+#include <bluetooth/rfcomm.h>
+#include <bluetooth/sdp.h>
+#include <bluetooth/sdp_lib.h>
+#include <bluetooth/sco.h>
 
 struct bt_device {
     char name[248];
@@ -23,6 +27,7 @@ struct bt_device {
 };
 
 struct bt_device *get_bt_device_list();
+void fuzz( char address[] );
 
 int main(int argc, char **argv) {
     
@@ -65,6 +70,8 @@ int main(int argc, char **argv) {
     int target_device = atoi(user_input) - 1;
 
     printf("[+] Launching Fuzzer for \"%s\"\n", bt_device_list[target_device].name);
+
+    fuzz(bt_device_list[target_device].addr);
     
     return 0;
 
@@ -122,4 +129,33 @@ struct bt_device *get_bt_device_list() {
     close( sock );
     return bt_device_list;
 
+}
+
+void fuzz( char dest[] ) {
+
+    struct sockaddr_rc address = { 0 };
+    int dev_id, sock, s;
+    int i = 0;
+    char addr[19] = { 0 };
+
+    s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+    str2ba( dest, &address.rc_bdaddr );
+
+    // Choosing Bluetooth Adapter to use (first available adapter) and opening socket
+    dev_id = hci_get_route(NULL);
+    sock = hci_open_dev( dev_id );
+    if (dev_id < 0 || sock < 0) {
+        perror("opening socket");
+        exit(1);
+    }
+
+    while(1) {
+
+        printf("[i] Trying to send data to \"%s\"", dest);
+        write(s, "a", 6);
+        
+    }
+
+
+    return;
 }
