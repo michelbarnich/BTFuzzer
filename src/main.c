@@ -20,6 +20,7 @@ ____ _______ ______ _    _ __________________ _____
 #include <bluetooth/sdp.h>
 #include <bluetooth/sdp_lib.h>
 #include <bluetooth/sco.h>
+#include <stdbool.h>
 
 struct bt_device {
     char name[248];
@@ -138,24 +139,25 @@ void fuzz( char dest[] ) {
     int dev_id, sock, s, status;
     int i = 0;
     char addr[19] = { 0 };
+    bool continue_flag = true;
 
     s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
     address.rc_family = AF_BLUETOOTH;
     address.rc_channel = (uint8_t) 1;
     str2ba( dest, &address.rc_bdaddr );
 
-    // Choosing Bluetooth Adapter to use (first available adapter) and opening socket
-    dev_id = hci_get_route(NULL);
-    sock = hci_open_dev( dev_id );
-    if (dev_id < 0 || sock < 0) {
-        perror("opening socket");
-        exit(1);
-    }
+        status = connect(s, (struct sockaddr *)&address, sizeof(address));
+    printf("[+] connection status: %d\n",status); // status 0 means good
 
-    status = connect(s, (struct sockaddr *)&address, sizeof(address));
-    printf("[+] connection status: %d\n\n",status);
+    while(continue_flag) {
 
-    while(1) {
+        // Choosing Bluetooth Adapter to use (first available adapter) and opening socket
+        dev_id = hci_get_route(NULL);
+        sock = hci_open_dev( dev_id );
+        if (dev_id < 0 || sock < 0) {
+            perror("[!] opening socket failed!");
+            continue_flag = false;
+        }
 
         int payload_length = rand();
         unsigned char *random_bytes = gen_rdm_bytestream(payload_length);
@@ -164,8 +166,11 @@ void fuzz( char dest[] ) {
         write(s, random_bytes, payload_length);
         sleep(1);
 
-    }
+        printf("[+] Closing socket\n");
+        close(s);
+        close( sock );
 
+    }
 
     return;
 }
