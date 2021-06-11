@@ -28,6 +28,7 @@ struct bt_device {
 
 struct bt_device *get_bt_device_list();
 void fuzz( char address[] );
+unsigned char *gen_rdm_bytestream (size_t num_bytes);
 
 int main(int argc, char **argv) {
     
@@ -152,16 +153,32 @@ void fuzz( char dest[] ) {
     }
 
     status = connect(s, (struct sockaddr *)&address, sizeof(address));
-    printf("[i] connection status: %d\n\n",status);
+    printf("[+] connection status: %d\n\n",status);
 
     while(1) {
 
-        printf("[i] Trying to send data to \"%s\"...\n", dest);
-        write(s, "a", 2);
+        int payload_length = rand();
+        unsigned char *random_bytes = gen_rdm_bytestream(payload_length);
+
+        printf("[+] Trying to send data to \"%s\"...\n", dest);
+        write(s, random_bytes, payload_length);
         sleep(1);
 
     }
 
 
     return;
+}
+
+unsigned char *gen_rdm_bytestream (size_t num_bytes)
+{
+  unsigned char *stream = (unsigned char *)malloc(num_bytes);
+  size_t i;
+
+  for (i = 0; i < num_bytes; i++)
+  {
+    stream[i] = rand ();
+  }
+
+  return stream;
 }
